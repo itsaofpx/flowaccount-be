@@ -1,22 +1,23 @@
 # Product Management API
 
-ระบบจัดการสินค้า (Product Management API) พัฒนาด้วย **NestJS + TypeScript** สำหรับจัดการข้อมูลสินค้า การค้นหา การขายสินค้า และการอัปเดตราคาสินค้าหลายรายการพร้อมกัน
+ระบบจัดการสินค้า (Product Management API) พัฒนาด้วย **NestJS + TypeScript** สำหรับจัดการสินค้า การค้นหา การขายสินค้า และการอัปเดตราคาสินค้าหลายรายการพร้อมกัน
+
+ปัจจุบันระบบใช้ **In-Memory Storage** สำหรับจัดเก็บข้อมูลสินค้า โดยยังไม่มีการเชื่อมต่อ Database
 
 ## Tech Stack
 
 - **NestJS** — Backend Framework
 - **TypeScript** — Programming Language
-- **PostgreSQL** — Database
-- **TypeORM** — ORM
-- **Class Validator** — Request Validation
+- **class-validator** — Request Validation
+- **class-transformer** — Request Transformation
 - **Swagger / OpenAPI** — API Documentation
-- **Docker** — Database / Application Environment
+- **In-Memory Storage** — Temporary Data Storage
 
 ---
 
 ## Features
 
-ระบบรองรับการทำงานหลักดังนี้
+ระบบรองรับการทำงานหลักดังนี้:
 
 - สร้างสินค้าใหม่
 - แสดงรายการสินค้าทั้งหมด
@@ -24,8 +25,8 @@
 - ค้นหาสินค้าด้วย Keyword
 - ขายสินค้าและตัด Stock
 - อัปเดตราคาสินค้าหลายรายการในครั้งเดียว
-- Validate Request ด้วย `class-validator`
-- API Documentation ด้วย Swagger
+- Request Validation
+- Swagger API Documentation
 
 ---
 
@@ -48,27 +49,31 @@ src/
 └── main.ts
 ```
 
-### Layer Responsibilities
-
-**Controller**
+### Controller
 
 รับ HTTP Request และส่งต่อข้อมูลให้ Service
 
-**Service**
+### Service
 
-จัดการ Business Logic ของระบบ เช่น การสร้างสินค้า การขายสินค้า และการอัปเดตราคา
+จัดการ Business Logic ของระบบ เช่น:
 
-**Entity**
+- สร้างสินค้า
+- ค้นหาสินค้า
+- ขายสินค้า
+- อัปเดต Stock
+- Bulk Update ราคา
 
-กำหนดโครงสร้างข้อมูล Product และการ Mapping กับ Database
-
-**DTO**
+### DTO
 
 กำหนดรูปแบบ Request และตรวจสอบความถูกต้องของข้อมูลก่อนเข้าสู่ Business Logic
 
+### Entity
+
+ใช้สำหรับกำหนดโครงสร้างและประเภทของ Product ภายในระบบ
+
 ---
 
-## Installation
+# Installation
 
 Clone repository:
 
@@ -85,39 +90,12 @@ npm install
 
 ---
 
-## Environment Variables
-
-สร้างไฟล์ `.env` ที่ root ของ project
-
-```env
-PORT=3000
-
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=postgres
-DATABASE_NAME=product_db
-```
-
-ปรับค่า Database ให้ตรงกับ environment ที่ใช้งาน
-
-> ไม่ควร commit ไฟล์ `.env` ที่มี credentials จริงขึ้น Git repository
-
----
-
-## Running the Application
+# Running the Application
 
 ### Development
 
 ```bash
 npm run start:dev
-```
-
-### Production
-
-```bash
-npm run build
-npm run start:prod
 ```
 
 Application จะทำงานที่:
@@ -130,19 +108,27 @@ http://localhost:3000
 
 # API Documentation
 
-Swagger UI สามารถเข้าใช้งานได้ที่:
+ระบบใช้ Swagger สำหรับ API Documentation
+
+หลังจากรัน Application แล้ว สามารถเข้า Swagger UI ได้ที่:
 
 ```text
 http://localhost:3000/api/docs
 ```
 
-Swagger ใช้สำหรับดูรายละเอียด API, Request Body, Query Parameters และสามารถทดลองเรียก API ผ่านหน้าเว็บได้โดยตรง
+Swagger สามารถใช้สำหรับ:
+
+- ดู API Endpoint ทั้งหมด
+- ดู Request Body
+- ดู Query Parameters
+- ดู Validation Rules
+- ทดลองเรียก API ผ่าน Swagger UI
 
 ---
 
 # API Endpoints
 
-## 1. Create Product
+## Create Product
 
 สร้างสินค้าใหม่
 
@@ -162,17 +148,9 @@ POST /api/products
 }
 ```
 
-### Validation
-
-- `name` ต้องเป็น String
-- `sku` ต้องมีความยาวอย่างน้อย 3 ตัวอักษร
-- `price` ต้องมากกว่า `0`
-- `stock` ต้องไม่ติดลบ
-- `category` ต้องเป็น Category ที่ระบบรองรับ
-
 ---
 
-## 2. Get Products
+## Get Products
 
 ดึงรายการสินค้าทั้งหมด
 
@@ -180,7 +158,7 @@ POST /api/products
 GET /api/products
 ```
 
-สามารถ Filter ตาม Category ได้:
+สามารถ Filter ตาม Category:
 
 ```http
 GET /api/products?category=food
@@ -188,9 +166,9 @@ GET /api/products?category=food
 
 ---
 
-## 3. Search Products
+## Search Products
 
-ค้นหาสินค้าด้วย Keyword
+ค้นหาสินค้าด้วย Keyword:
 
 ```http
 GET /api/products/search?keyword=coffee
@@ -204,9 +182,9 @@ GET /api/products/search?keyword=ข้าว
 
 ---
 
-## 4. Sell Product
+## Sell Product
 
-ขายสินค้าและลดจำนวน Stock
+ขายสินค้าและลด Stock:
 
 ```http
 POST /api/products/sell
@@ -221,19 +199,19 @@ POST /api/products/sell
 }
 ```
 
-ระบบจะตรวจสอบว่า:
+ระบบจะตรวจสอบ:
 
-- Product มีอยู่จริงหรือไม่
-- จำนวนสินค้าที่ต้องการขายถูกต้องหรือไม่
+- Product มีอยู่ในระบบหรือไม่
+- Quantity ถูกต้องหรือไม่
 - Stock เพียงพอหรือไม่
 
-หากขายสำเร็จ ระบบจะลด Stock ตามจำนวนที่ขาย
+หากขายสำเร็จ Stock จะถูกลดลงตามจำนวนที่ขาย
 
 ---
 
-## 5. Bulk Update Product Price
+## Bulk Update Product Price
 
-อัปเดตราคาสินค้าหลายรายการพร้อมกัน
+อัปเดตราคาสินค้าหลายรายการพร้อมกัน:
 
 ```http
 PUT /api/products/bulk-price-update
@@ -256,8 +234,6 @@ PUT /api/products/bulk-price-update
 }
 ```
 
-ระบบจะทำการอัปเดตราคาของสินค้าตาม `productId` ที่ระบุ
-
 ---
 
 # Validation
@@ -274,7 +250,7 @@ app.useGlobalPipes(
 );
 ```
 
-### Validation Behavior
+### Validation Configuration
 
 **whitelist**
 
@@ -282,13 +258,13 @@ app.useGlobalPipes(
 
 **transform**
 
-แปลง Request Data ให้ตรงกับ Type ที่กำหนดใน DTO
+ช่วยแปลงข้อมูล Request ให้ตรงกับ Type ที่กำหนด
 
 **forbidNonWhitelisted**
 
-หาก Request มี field ที่ไม่ได้ถูกกำหนดไว้ใน DTO ระบบจะ reject request
+ปฏิเสธ Request หากมี property ที่ไม่ได้ถูกกำหนดไว้ใน DTO
 
-ตัวอย่าง:
+ตัวอย่าง Request ที่ไม่ถูกต้อง:
 
 ```json
 {
@@ -301,39 +277,58 @@ app.useGlobalPipes(
 }
 ```
 
-Request นี้จะถูกปฏิเสธเนื่องจาก `unknownField` ไม่ได้ถูกกำหนดไว้ใน DTO
+Request จะถูกปฏิเสธเนื่องจาก `unknownField` ไม่ได้ถูกกำหนดไว้ใน DTO
 
 ---
 
-# Swagger
+# In-Memory Storage
 
-Swagger ถูกใช้สำหรับจัดทำ API Documentation และช่วยให้สามารถทดลอง API ได้โดยไม่ต้องใช้เครื่องมือเพิ่มเติม
+ปัจจุบันระบบยังไม่มี Database และใช้ข้อมูลที่จัดเก็บอยู่ภายใน Application Memory
 
-ตัวอย่างการกำหนด Swagger ใน DTO:
+ข้อดี:
 
-```ts
-@ApiProperty({
-  example: 1,
-  description: 'ID of the product',
-})
-productId!: number;
+- Setup ง่าย
+- ไม่ต้องติดตั้ง Database เพิ่ม
+- เหมาะสำหรับการทดสอบ API และ Business Logic
+
+ข้อจำกัด:
+
+- ข้อมูลจะหายเมื่อ Restart Application
+- ไม่เหมาะสำหรับ Production
+- ไม่สามารถแชร์ข้อมูลระหว่างหลาย Application Instances ได้
+
+### Future Improvement
+
+หากนำระบบไปใช้งานจริง สามารถเปลี่ยน Storage Layer เป็น Database เช่น PostgreSQL หรือ MySQL และใช้ ORM เช่น TypeORM หรือ Prisma ได้ โดยแยก Data Access Layer ออกจาก Business Logic เพื่อให้สามารถเปลี่ยน Storage ได้ง่าย
+
+---
+
+# Application Flow
+
+```text
+HTTP Request
+     │
+     ▼
+ Controller
+     │
+     ▼
+ DTO Validation
+     │
+     ▼
+ Product Service
+     │
+     ▼
+ In-Memory Storage
+     │
+     ▼
+ HTTP Response
 ```
-
-ทำให้ Swagger สามารถแสดง:
-
-- Data Type
-- Example
-- Description
-- Validation Constraints
-- Enum Values
-
-ได้โดยอัตโนมัติ
 
 ---
 
 # Error Handling
 
-ระบบจะคืน HTTP Status Code ตามลักษณะของ Request เช่น
+ตัวอย่าง HTTP Status Codes:
 
 | Status Code | ความหมาย                              |
 | ----------- | ------------------------------------- |
@@ -341,6 +336,7 @@ productId!: number;
 | `201`       | สร้างข้อมูลสำเร็จ                     |
 | `400`       | Request ไม่ถูกต้อง / Validation Error |
 | `404`       | ไม่พบ Product                         |
+| `409`       | ข้อมูลขัดแย้ง เช่น SKU ซ้ำ            |
 
 ตัวอย่าง Validation Error:
 
@@ -354,42 +350,16 @@ productId!: number;
 
 ---
 
-# Development Principles
-
-โปรเจกต์นี้ออกแบบโดยแยกความรับผิดชอบของแต่ละส่วนอย่างชัดเจน:
-
-```text
-HTTP Request
-     │
-     ▼
- Controller
-     │
-     ▼
-   DTO
- Validation
-     │
-     ▼
-  Service
-     │
-     ▼
- Repository / ORM
-     │
-     ▼
- Database
-```
-
-แนวทางนี้ช่วยให้ Business Logic ไม่ผูกติดกับ HTTP Layer และทำให้สามารถพัฒนาและทดสอบแต่ละส่วนได้ง่ายขึ้น
-
----
-
 # Available Scripts
 
 ```bash
 # Development
 npm run start:dev
 
-# Production
+# Production Build
 npm run build
+
+# Production
 npm run start:prod
 
 # Unit Tests
@@ -404,6 +374,27 @@ npm run lint
 
 ---
 
+# Design Approach
+
+โปรเจกต์แบ่งความรับผิดชอบออกเป็น Controller, DTO และ Service เพื่อให้ Business Logic แยกออกจาก HTTP Layer
+
+```text
+Controller
+    │
+    ├── Receive Request
+    └── Validate / Pass DTO
+            │
+            ▼
+        Service
+            │
+            ├── Business Logic
+            └── In-Memory Storage
+```
+
+แนวทางนี้ช่วยให้สามารถเปลี่ยน Storage ในอนาคตได้โดยไม่จำเป็นต้องเปลี่ยน API Contract หรือ Controller มากนัก
+
+---
+
 # Author
 
 **Podjanin Wachirawittayakul**
@@ -411,4 +402,3 @@ npm run lint
 Computer Science — Kasetsart University
 
 GitHub: `https://github.com/Itsaofpx`
-# flowaccount-be
